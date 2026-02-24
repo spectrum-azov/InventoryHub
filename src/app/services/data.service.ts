@@ -19,6 +19,10 @@ export interface AppItem {
     contactPerson?: string;
     position?: string;
     phone?: string;
+    // New fields from user request
+    requestCard?: string;
+    application?: string;
+    applicationNumber?: string;
 }
 
 @Injectable({
@@ -120,6 +124,11 @@ export class DataService {
             item.id === updatedItem.id ? { ...updatedItem } : item
         );
         this.saveAndNext(updatedItems);
+    }
+
+    addItem(newItem: AppItem) {
+        const currentItems = this.itemsSubject.value;
+        this.saveAndNext([...currentItems, newItem]);
     }
 
     getItemsByStatus(status: string): AppItem[] {

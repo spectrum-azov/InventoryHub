@@ -11,8 +11,17 @@ import { DataService, AppItem } from '../services/data.service';
     <div class="p-6">
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Потреба</h1>
-        <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold">
-          Всього: {{ items.length }}
+        <div class="flex items-center space-x-4">
+          <button (click)="openAddModal()" 
+                  class="flex items-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-bold text-sm shadow-lg shadow-indigo-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            <span>Додати потребу</span>
+          </button>
+          <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold">
+            Всього: {{ items.length }}
+          </div>
         </div>
       </div>
 
@@ -61,23 +70,17 @@ import { DataService, AppItem } from '../services/data.service';
                 </svg>
                 <span class="text-gray-700 dark:text-gray-300 font-medium">{{ item.contactPerson || item.fullName }}</span>
               </div>
-              <div class="flex items-center text-sm" *ngIf="item.amount">
+              <div class="flex items-center text-sm" *ngIf="item.phone">
                 <svg class="h-4 w-4 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h2.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
-                <span class="text-gray-600 dark:text-gray-400 font-bold">Кількість: {{ item.amount }}</span>
+                <span class="text-gray-600 dark:text-gray-400">{{ item.phone }}</span>
               </div>
               <div class="flex items-center text-sm">
                 <svg class="h-4 w-4 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
                 <span class="text-gray-600 dark:text-gray-400">{{ item.service }}</span>
-              </div>
-              <div class="flex items-center text-sm">
-                <svg class="h-4 w-4 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span class="text-gray-600 dark:text-gray-400">{{ item.date }}</span>
               </div>
             </div>
           </div>
@@ -94,12 +97,14 @@ import { DataService, AppItem } from '../services/data.service';
       </div>
     </div>
 
-    <!-- Edit Modal -->
+    <!-- Edit/Add Modal -->
     <div *ngIf="editingItem" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm transition-all animate-in fade-in duration-300">
-      <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-white/20">
-        <div class="p-8">
+      <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-white/20">
+        <div class="p-8 max-h-[90vh] overflow-y-auto">
           <div class="flex justify-between items-center mb-8">
-            <h2 class="text-2xl font-black text-gray-900 dark:text-white">Редагувати потребу</h2>
+            <h2 class="text-2xl font-black text-gray-900 dark:text-white">
+              {{ isAdding ? 'Додати потребу' : 'Редагувати потребу' }}
+            </h2>
             <button (click)="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -107,40 +112,92 @@ import { DataService, AppItem } from '../services/data.service';
             </button>
           </div>
 
-          <form (ngSubmit)="saveEdit()" class="space-y-6">
-            <div class="grid grid-cols-1 gap-6">
-              <div>
+          <form (ngSubmit)="saveItem()" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="md:col-span-2">
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Номенклатура</label>
                 <input [(ngModel)]="editingItem.nomenclature" name="nomenclature" type="text" 
                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium">
               </div>
               
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Кількість</label>
-                  <input [(ngModel)]="editingItem.amount" name="amount" type="number" 
-                         class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium font-mono">
-                </div>
-                <div>
-                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Тип</label>
-                  <select [(ngModel)]="editingItem.type" name="type" 
-                          class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium">
-                    <option value="Робочий">Робочий</option>
-                    <option value="СЕДО">СЕДО</option>
-                    <option value="МОСІ">МОСІ</option>
-                  </select>
-                </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Тип</label>
+                <select [(ngModel)]="editingItem.type" name="type" 
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium">
+                  <option value="Робочий">Робочий</option>
+                  <option value="СЕДО">СЕДО</option>
+                  <option value="МОСІ">МОСІ</option>
+                </select>
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Отримувач / Контакт</label>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Статус</label>
+                <select [(ngModel)]="editingItem.status" name="status" 
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium">
+                  <option value="Потреба">Потреба</option>
+                  <option value="Погоджено">Погоджено</option>
+                  <option value="Відхилено">Відхилено</option>
+                  <option value="Видано">Видано</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Модель</label>
+                <input [(ngModel)]="editingItem.model" name="model" type="text" 
+                       class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Серійний номер</label>
+                <input [(ngModel)]="editingItem.serialNumber" name="serialNumber" type="text" 
+                       class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Контактна особа</label>
                 <input [(ngModel)]="editingItem.contactPerson" name="contactPerson" type="text" 
                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium">
               </div>
 
               <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Номер телефону</label>
+                <input [(ngModel)]="editingItem.phone" name="phone" type="text" 
+                       class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Служба</label>
+                <input [(ngModel)]="editingItem.service" name="service" type="text" 
+                       class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">ID запиту</label>
+                <input [(ngModel)]="editingItem.requestNumber" name="requestNumber" type="text" 
+                       class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Картка запиту</label>
+                <input [(ngModel)]="editingItem.requestCard" name="requestCard" type="text" 
+                       class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Заявка</label>
+                <input [(ngModel)]="editingItem.application" name="application" type="text" 
+                       class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Номер заявки</label>
+                <input [(ngModel)]="editingItem.applicationNumber" name="applicationNumber" type="text" 
+                       class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium">
+              </div>
+
+              <div class="md:col-span-2">
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Примітка</label>
-                <textarea [(ngModel)]="editingItem.notes" name="notes" rows="3"
+                <textarea [(ngModel)]="editingItem.notes" name="notes" rows="2"
                           class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium resize-none"></textarea>
               </div>
             </div>
@@ -152,7 +209,7 @@ import { DataService, AppItem } from '../services/data.service';
               </button>
               <button type="submit" 
                       class="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-bold text-sm shadow-lg shadow-indigo-200">
-                Зберегти зміни
+                {{ isAdding ? 'Створити' : 'Зберегти зміни' }}
               </button>
             </div>
           </form>
@@ -165,6 +222,7 @@ export class NeedsComponent implements OnInit {
   private dataService = inject(DataService);
   items: AppItem[] = [];
   editingItem: AppItem | null = null;
+  isAdding: boolean = false;
 
   ngOnInit() {
     this.dataService.items$.subscribe(() => {
@@ -180,18 +238,48 @@ export class NeedsComponent implements OnInit {
     this.dataService.updateStatus(id, 'Відхилено');
   }
 
+  openAddModal() {
+    this.isAdding = true;
+    this.editingItem = {
+      id: Date.now().toString(),
+      nomenclature: '',
+      type: 'Робочий',
+      model: '',
+      serialNumber: '',
+      fullName: '',
+      service: '',
+      request: false,
+      requestNumber: '',
+      date: new Date().toLocaleDateString(),
+      location: '',
+      status: 'Потреба',
+      notes: '',
+      phone: '',
+      contactPerson: '',
+      requestCard: '',
+      application: '',
+      applicationNumber: ''
+    };
+  }
+
   openEditModal(item: AppItem) {
+    this.isAdding = false;
     // Create a deep copy to avoid direct binding to the store before saving
     this.editingItem = JSON.parse(JSON.stringify(item));
   }
 
   closeEditModal() {
     this.editingItem = null;
+    this.isAdding = false;
   }
 
-  saveEdit() {
+  saveItem() {
     if (this.editingItem) {
-      this.dataService.updateItem(this.editingItem);
+      if (this.isAdding) {
+        this.dataService.addItem(this.editingItem);
+      } else {
+        this.dataService.updateItem(this.editingItem);
+      }
       this.closeEditModal();
     }
   }
