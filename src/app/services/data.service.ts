@@ -114,6 +114,14 @@ export class DataService {
         this.saveAndNext(updatedItems);
     }
 
+    updateItem(updatedItem: AppItem) {
+        const currentItems = this.itemsSubject.value;
+        const updatedItems = currentItems.map(item =>
+            item.id === updatedItem.id ? { ...updatedItem } : item
+        );
+        this.saveAndNext(updatedItems);
+    }
+
     getItemsByStatus(status: string): AppItem[] {
         return this.itemsSubject.value.filter(item => item.status === status);
     }
